@@ -1,5 +1,8 @@
-const inquirer = require('inquirer');
-const sqlite3 = require('better-sqlite3');
+import inquirer from 'inquirer';
+import sqlite3 from 'better-sqlite3';
+
+// const inquirer = require('inquirer');
+// const sqlite3 = require('better-sqlite3');
 
 // Initialize DB connection
 const db = new sqlite3(':memory:', { verbose: console.log });

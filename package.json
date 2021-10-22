@@ -2,6 +2,7 @@
   "name": "daily-record-collection",
   "version": "1.0.0",
   "description": "interactive cli app for general recording.",
+  "type": "module",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -12,5 +13,8 @@
   "dependencies": {
     "better-sqlite3": "^7.4.3",
     "inquirer": "^8.2.0"
+  },
+  "COMMENTS": {
+    "type": "using ESM for modules."
   }
 }
