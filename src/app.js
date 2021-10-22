@@ -1,15 +1,11 @@
 import inquirer from 'inquirer';
-import sqlite3 from 'better-sqlite3';
-
-// const inquirer = require('inquirer');
-// const sqlite3 = require('better-sqlite3');
+import Repository from './repository.js';
 
 // Initialize DB connection
-const db = new sqlite3(':memory:', { verbose: console.log });
+const repository = new Repository();
 
 // Initialize DB tables
-const stmt = db.prepare('CREATE TABLE dog (name Text)');
-stmt.run();
+repository.createTable();
 
 // Setup inquirer prompt
 function main() {
@@ -34,7 +30,6 @@ function menu() {
             menu();
         }
         else if (answers.mainMenu === 'Exit') {
-            db.close();
             process.exit(0);
         }
     });
@@ -48,22 +43,13 @@ function nameNewPuppy() {
     };
 
     inquirer.prompt(inputRequestPrompt).then((answers) => {
-        let insertStmt = db.prepare('INSERT INTO dog (name) VALUES (@name)');
-        let insertMany = db.transaction((dogs) => {
-            for (let dog of dogs) {
-                insertStmt.run(dog);
-            }
-        });
-        insertMany([
-            { name: answers.dogNameRequest }
-        ]);
-
+        repository.insert(answers.dogNameRequest);
         menu();
     });
 }
 
 function listCurrentPuppies() {
-    let dogs = db.prepare('SELECT (name) from dog').all();
+    let dogs = repository.select();
     dogs.forEach(dog => {
         console.log(dog.name);
     })
