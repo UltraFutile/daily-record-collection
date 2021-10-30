@@ -3,13 +3,13 @@ import { Choice } from "./entity/Choice";
 import { Metric } from "./entity/Metric";
 import { ScaleRecord } from "./entity/records/ScaleRecord";
 
-function createTestData () {
+export function createTestData () {
     createConnection().then(async connection => {
 
         // Test Scale record
         const testMetric = new Metric();
         testMetric.name = "test metric";
-        testMetric.type = "set-and-forget";
+        testMetric.recordType = "set-and-forget";
         await connection.manager.save(testMetric);
     
         const choice1 = new Choice();

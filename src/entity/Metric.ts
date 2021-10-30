@@ -14,12 +14,14 @@ export class Metric {
 
     /**
      * type of metric:
-     * 'sets-of-reps'
-     * 'scale'
-     * 'boolean'
-     * 'digit'
-     * 'text'
+     * - 'sets'
+     * - 'scale'
+     * - 'digit'
+     * - 'text'
      */ 
     @Column()
-    type: string;
+    recordType: string;
+
+    @Column()
+    promptText: string;
 }
