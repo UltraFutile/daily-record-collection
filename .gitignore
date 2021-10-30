@@ -1,3 +1,7 @@
+db/
+
+# EVERYTHING BELOW COMES FROM NPM TEMPLATE
+
 # Logs
 logs
 *.log

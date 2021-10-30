@@ -1,6 +1,6 @@
 {
     "type": "better-sqlite3",
-    "database": "./records.db",
+    "database": "./db/records.db",
     "synchronize": true,
     "logging": false,
     "entities": [
