@@ -1,4 +1,5 @@
 import {Column, Entity, PrimaryGeneratedColumn} from "typeorm";
+import { RecordType } from "../data/RecordType";
 
 /**
  * Defines a metric that will be recorded
@@ -9,7 +10,9 @@ export class Metric {
     id: number;
 
     // user defined name
-    @Column()
+    @Column({
+        unique: true
+    })
     name: string;
 
     /**
@@ -21,6 +24,10 @@ export class Metric {
      */ 
     @Column()
     recordType: string;
+
+    getRecordType(): RecordType {
+        return RecordType[this.recordType];
+    }
 
     @Column()
     promptText: string;
