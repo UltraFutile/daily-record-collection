@@ -1,4 +1,5 @@
 import inquirer from 'inquirer';
+import {getConnection} from "typeorm";
 import { MetricRepository } from './data/MetricRepository';
 import { RecordType } from './data/RecordType';
 
@@ -33,19 +34,20 @@ function menu() {
     }
 
 
-    inquirer.prompt(menuPrompt).then((answers) => {
+    inquirer.prompt(menuPrompt).then(async (answers) => {
         switch(answers.mainMenu) {
             case MainMenuChoices.Record:
-                nameNewPuppy();
+                record();
                 break;
             case MainMenuChoices.ListMetrics:
-                listCurrentPuppies();
+                await listMetrics();
                 menu();
                 break;
             case MainMenuChoices.CreateMetric:
                 createMetric()
                 break;
             case MainMenuChoices.Exit:
+                getConnection().close();
                 process.exit(0);
             default:
                 console.error("Main menu answer error. Answers object:");
@@ -53,6 +55,25 @@ function menu() {
                 break;
         }
     });
+}
+
+function record() {
+    const inputRequestPrompt = {
+        type: 'input',
+        name: 'listMetrics',
+        message: 'Which metric would you like to record?',
+    };
+
+    inquirer.prompt(inputRequestPrompt).then((answers) => {
+        console.log(answers.listMetrics);
+        menu();
+    });
+}
+
+async function listMetrics() {
+    const repo = new MetricRepository();
+    let metrics = await repo.readAllAsync();
+    console.log(metrics);
 }
 
 function createMetric() {
@@ -83,34 +104,10 @@ function createMetric() {
             message: 'What should the prompt text be for this metric?'
         },
     ])
-    .then((answers) => {
+    .then(async (answers) => {
         console.log(answers);
         const repo = new MetricRepository();
-        repo.create(answers.metricName, RecordType[answers.metricType], answers.metricPrompt)
-
+        await repo.createAsync(answers.metricName, RecordType[answers.metricType], answers.metricPrompt)
         menu();
     });
-}
-
-
-function nameNewPuppy() {
-    const inputRequestPrompt = {
-        type: 'input',
-        name: 'dogNameRequest',
-        message: 'What would you like to name the newborn puppy?',
-    };
-
-    inquirer.prompt(inputRequestPrompt).then((answers) => {
-        // repository.insert(answers.dogNameRequest);
-        console.log(answers.dogNameRequest);
-        menu();
-    });
-}
-
-function listCurrentPuppies() {
-    // let dogs = repository.select();
-    // dogs.forEach(dog => {
-    //     console.log(dog.name);
-    // })
-    console.log("List current puppies!");
 }
