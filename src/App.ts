@@ -1,16 +1,10 @@
 import inquirer from 'inquirer';
-import Repository from './repository.js';
-
-// Initialize DB connection
-const repository = new Repository();
-
-// Initialize DB tables
-repository.createTable();
 
 // Setup inquirer prompt
 function main() {
     console.log('We have been blessed with a new litter of puppies! We should try to name them all!');
     menu();
+
 }
 
 function menu() {
@@ -43,16 +37,18 @@ function nameNewPuppy() {
     };
 
     inquirer.prompt(inputRequestPrompt).then((answers) => {
-        repository.insert(answers.dogNameRequest);
+        // repository.insert(answers.dogNameRequest);
+        console.log(answers.dogNameRequest);
         menu();
     });
 }
 
 function listCurrentPuppies() {
-    let dogs = repository.select();
-    dogs.forEach(dog => {
-        console.log(dog.name);
-    })
+    // let dogs = repository.select();
+    // dogs.forEach(dog => {
+    //     console.log(dog.name);
+    // })
+    console.log("List current puppies!");
 }
 
 main();
