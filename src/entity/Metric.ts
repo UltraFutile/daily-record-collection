@@ -15,9 +15,9 @@ export class Metric {
     /**
      * type of metric:
      * - 'sets'
-     * - 'scale'
-     * - 'digit'
-     * - 'text'
+     * - 'Scale'
+     * - 'Integer'
+     * - 'Text'
      */ 
     @Column()
     recordType: string;
