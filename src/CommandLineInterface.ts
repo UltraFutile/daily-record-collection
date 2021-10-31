@@ -1,9 +1,13 @@
 import inquirer from 'inquirer';
-import {getConnection} from "typeorm";
+import {getConnection, getRepository} from "typeorm";
 import { ChoiceRepository } from './data/ChoiceRepository';
 import { MetricRepository } from './data/MetricRepository';
 import { RecordType } from './data/RecordType';
+import { Choice } from './entity/Choice';
 import { Metric } from './entity/Metric';
+import { IntegerRecord } from './entity/records/IntegerRecord';
+import { ScaleRecord } from './entity/records/ScaleRecord';
+import { TextRecord } from './entity/records/TextRecord';
 
 export function commandLineInterface() {
     main();
@@ -58,32 +62,79 @@ async function menu() {
 }
 
 async function record() {
-    const repo = new MetricRepository();
-    let metrics: Metric[] = await repo.readAllAsync();
+    const metricRepo = new MetricRepository();
+    let metrics: Metric[] = await metricRepo.readAllAsync();
 
-    let answers = await inquirer.prompt({
+    let metricChoiceAnswer = await inquirer.prompt({
             type: 'list',
             name: 'metricChoice',
             message: 'Which metric would you like to record?',
             choices: metrics.map(x => x.name)
     });
 
-    console.log(answers.metricChoice);
-
     // get the metric
-    let metric: Metric = metrics.find(x => x.name === answers.metricChoice);
-    metric.getRecordType();
+    let metric: Metric = metrics.find(x => x.name === metricChoiceAnswer.metricChoice);
+    
+    // get choices
+    // TODO: I'm sure TypeORM supports a way to get both metric and choices in one query
+    let choices: Choice[];
+    if (metric.getRecordType() === RecordType.Scale) {
+        const choiceRepo = new ChoiceRepository();
+        choices = await choiceRepo.readAllAsync(metric);
+    }
+
 
     // base prompt
-    let prompt = {
-        type: 'input',
+    let recordPrompt: any = {
         name: 'metricValue',
         message: metric.promptText
     };
 
-    inquirer.prompt({
-        
-    })
+    // TODO: There's probably a better way to organize this code
+    // instead of constantly using switch statements everywhere
+    switch (metric.getRecordType()) {
+        case RecordType.Integer:
+            recordPrompt.type = 'input';
+            break;
+        case RecordType.Scale:
+            recordPrompt.type = 'list';
+            recordPrompt.choices = choices.map(x => x.name); // TODO: validation for choice list assumed here! bad?
+            break;
+        case RecordType.Text:
+            recordPrompt.type = 'input';
+            break;
+        default:
+            console.error("Unrecognized record type!")
+            break;
+    }
+
+    let answers = await inquirer.prompt(recordPrompt);
+    
+    switch (metric.getRecordType()) {
+        case RecordType.Integer:
+            let integerRecord = new IntegerRecord();
+            integerRecord.value = parseInt(answers.metricValue); // TODO: Validation for parseInt
+            integerRecord.metric = metric;
+            await getRepository(IntegerRecord).save(integerRecord);
+            break;
+        case RecordType.Scale:
+            let choice: Choice = choices.find(x => x.name === answers.metricValue);
+            let scaleRecord = new ScaleRecord();
+            scaleRecord.choice = choice; // TODO: inconsistent name? Other records use 'value'...
+            scaleRecord.metric = metric;
+            await getRepository(ScaleRecord).save(scaleRecord);
+            break;
+        case RecordType.Text:
+            let textRecord = new TextRecord();
+            textRecord.value = answers.metricValue; // TODO: Validation for string input
+            textRecord.metric = metric;
+            await getRepository(TextRecord).save(textRecord);
+            break;
+        default:
+            console.error("Unrecognized record type!")
+            break;
+    }
+
     menu();
 }
 
@@ -176,6 +227,7 @@ async function inputChoices(choices: [string, number][]): Promise<void> {
         await inputChoices(choices);
     }
     else {
+        // TODO: Should validate, at least one choice should be created.
         console.log(choices);
     }
 }

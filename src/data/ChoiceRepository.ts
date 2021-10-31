@@ -11,7 +11,7 @@ export class ChoiceRepository {
         return getRepository(Choice).save(choice);
     }
 
-    async readAllAsync(): Promise<Choice[]> {
-        return getRepository(Choice).find();
+    async readAllAsync(metric: Metric): Promise<Choice[]> {
+        return getRepository(Choice).find({metric: metric});
     }
 }
