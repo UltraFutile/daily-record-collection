@@ -1,7 +1,5 @@
 import inquirer from 'inquirer';
 import {getConnection, getRepository} from "typeorm";
-import { ChoiceRepository } from './data/ChoiceRepository';
-import { MetricRepository } from './data/MetricRepository';
 import { RecordType } from './data/RecordType';
 import { Choice } from './entity/Choice';
 import { Metric } from './entity/Metric';
@@ -23,6 +21,7 @@ enum MainMenuChoices {
     Record = "Record",
     ListMetrics = "List metrics",
     CreateMetric = "Create new metric",
+    DeleteMetric = "Delete metric",
     Exit = "Exit"
 }
 
@@ -35,6 +34,7 @@ async function menu() {
             MainMenuChoices.Record,
             MainMenuChoices.ListMetrics,
             MainMenuChoices.CreateMetric,
+            MainMenuChoices.DeleteMetric,
             MainMenuChoices.Exit
         ]
     }
@@ -42,14 +42,20 @@ async function menu() {
     let answers = await inquirer.prompt(menuPrompt);
     switch(answers.mainMenu) {
         case MainMenuChoices.Record:
-            record();
+            await record();
+            menu();
             break;
         case MainMenuChoices.ListMetrics:
             await listMetrics();
             menu();
             break;
         case MainMenuChoices.CreateMetric:
-            await inputMetric()
+            await inputMetric();
+            menu();
+            break;
+        case MainMenuChoices.DeleteMetric:
+            await deleteMetric();
+            menu();
             break;
         case MainMenuChoices.Exit:
             getConnection().close();
@@ -62,9 +68,7 @@ async function menu() {
 }
 
 async function record() {
-    const metricRepo = new MetricRepository();
-    let metrics: Metric[] = await metricRepo.readAllAsync();
-
+    let metrics: Metric[] = await getRepository(Metric).find();
     let metricChoiceAnswer = await inquirer.prompt({
             type: 'list',
             name: 'metricChoice',
@@ -79,8 +83,7 @@ async function record() {
     // TODO: I'm sure TypeORM supports a way to get both metric and choices in one query
     let choices: Choice[];
     if (metric.getRecordType() === RecordType.Scale) {
-        const choiceRepo = new ChoiceRepository();
-        choices = await choiceRepo.readAllAsync(metric);
+        choices = await getRepository(Choice).find({metric: metric});
     }
 
 
@@ -134,13 +137,10 @@ async function record() {
             console.error("Unrecognized record type!")
             break;
     }
-
-    menu();
 }
 
 async function listMetrics() {
-    const repo = new MetricRepository();
-    let metrics = await repo.readAllAsync();
+    let metrics = await getRepository(Metric).find();
     console.log(metrics);
 }
 
@@ -152,8 +152,7 @@ async function inputMetric() {
             message: 'What would you like to name the metric?',
             async validate (answer: string) {
                 if (answer) {
-                    const repo = new MetricRepository();
-                    let metric = await repo.readAsync(answer);
+                    let metric = await getRepository(Metric).findOne({ name: answer});
                     if (metric) {
                         console.log(` Metric with name ${answer} already exists! Please try a different name.`)
                         return false;
@@ -188,21 +187,42 @@ async function inputMetric() {
     if (RecordType[answers.metricType] === RecordType.Scale) {
         await inputChoices(choices);
     }
-    createMetric(answers.metricName, RecordType[answers.metricType], answers.metricPrompt, choices);
+    await createMetric(answers.metricName, RecordType[answers.metricType], answers.metricPrompt, choices);
+}
+
+/**
+ * TODO: implement way to 'back out' of selecting this option
+ */
+async function deleteMetric() {
+    let metrics: Metric[] = await getRepository(Metric).find();
+    let metricChoiceAnswer = await inquirer.prompt({
+            type: 'list',
+            name: 'metricChoice',
+            message: 'Which metric would you like to record?',
+            choices: metrics.map(x => x.name)
+    });
+
+    // get the metric
+    let metric: Metric = metrics.find(x => x.name === metricChoiceAnswer.metricChoice);
+    await getRepository(Metric).remove(metric);
 }
 
 async function createMetric(metricName: string, recordType: RecordType, promptText: string, choices?: [string, number][]) {
-    const metricRepo = new MetricRepository();
-    let newMetric: Metric = await metricRepo.createAsync(metricName, recordType, promptText);
+    const metric = new Metric();
+    metric.name = metricName;
+    metric.recordType = recordType.toString();
+    metric.promptText = promptText;
+    let newMetric: Metric = await getRepository(Metric).save(metric);
 
     if (choices) {
-        const choiceRepo = new ChoiceRepository();
         choices.forEach(async c => {
-            await choiceRepo.createAsync(c[0], newMetric, c[1])
+            const choice = new Choice();
+            choice.name = c[0];
+            choice.metric = newMetric;
+            choice.value = c[1];
+            await getRepository(Choice).save(choice);
         })
     }
-
-    menu();
 }
 
 async function inputChoices(choices: [string, number][]): Promise<void> {
@@ -218,7 +238,7 @@ async function inputChoices(choices: [string, number][]): Promise<void> {
             message: 'Want to enter another choice (just hit enter for YES)?',
             default: true,
         }
-    ]);
+    ]); 
     
     let words: string[] = answers.choiceValue.split(',');
     choices.push([words[0].trim(), parseInt(words[1].trim())]);

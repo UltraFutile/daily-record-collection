@@ -10,7 +10,9 @@ export abstract class AbstractRecord {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @ManyToOne(type => Metric)
+    @ManyToOne(type => Metric, {
+        onDelete: "CASCADE"
+    })
     metric: Metric;
 
     @Column({

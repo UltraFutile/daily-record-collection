@@ -9,7 +9,9 @@ export class Choice {
     @Column()
     name: string;
 
-    @ManyToOne(type => Metric)
+    @ManyToOne(() => Metric, {
+        onDelete: "CASCADE"
+    })
     metric: Metric;
 
     @Column()
