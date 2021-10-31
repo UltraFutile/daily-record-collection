@@ -17,7 +17,7 @@ export class Metric {
 
     /**
      * type of metric:
-     * - 'sets'
+     * - 'sets' - NOT IMPLEMENTED
      * - 'Scale'
      * - 'Integer'
      * - 'Text'

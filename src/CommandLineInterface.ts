@@ -1,5 +1,6 @@
 import inquirer from 'inquirer';
 import {getConnection} from "typeorm";
+import { ChoiceRepository } from './data/ChoiceRepository';
 import { MetricRepository } from './data/MetricRepository';
 import { RecordType } from './data/RecordType';
 import { Metric } from './entity/Metric';
@@ -58,7 +59,7 @@ async function menu() {
 
 async function record() {
     const repo = new MetricRepository();
-    let metrics = await repo.readAllAsync();
+    let metrics: Metric[] = await repo.readAllAsync();
 
     let answers = await inquirer.prompt({
             type: 'list',
@@ -92,9 +93,6 @@ async function listMetrics() {
     console.log(metrics);
 }
 
-/**
- * TODO: Make sure duplicate metrics cannot be created
- */
 async function inputMetric() {
     let answers = await inquirer.prompt([
         {
@@ -135,28 +133,28 @@ async function inputMetric() {
     
     console.log(answers);
 
-    let choices = [];
+    let choices: [string, number][] = [];
     if (RecordType[answers.metricType] === RecordType.Scale) {
         await inputChoices(choices);
     }
     createMetric(answers.metricName, RecordType[answers.metricType], answers.metricPrompt, choices);
 }
 
-async function createMetric(metricName: string, recordType: RecordType, promptText: string, choices?: any[]) {
-    console.log(`Create metric ${metricName}, of record type ${recordType}, prompt text ${promptText}`)
-    console.log(choices);
-
-    // const repo = new MetricRepository();
-    // let newMetric: Metric = await repo.createAsync(metricName, recordType, promptText);
+async function createMetric(metricName: string, recordType: RecordType, promptText: string, choices?: [string, number][]) {
+    const metricRepo = new MetricRepository();
+    let newMetric: Metric = await metricRepo.createAsync(metricName, recordType, promptText);
 
     if (choices) {
-
+        const choiceRepo = new ChoiceRepository();
+        choices.forEach(async c => {
+            await choiceRepo.createAsync(c[0], newMetric, c[1])
+        })
     }
 
     menu();
 }
 
-async function inputChoices(choices: any[]): Promise<void> {
+async function inputChoices(choices: [string, number][]): Promise<void> {
     let answers = await inquirer.prompt([
         {
             type: 'input',
@@ -171,7 +169,9 @@ async function inputChoices(choices: any[]): Promise<void> {
         }
     ]);
     
-    choices.push(answers.choiceValue);
+    let words: string[] = answers.choiceValue.split(',');
+    choices.push([words[0].trim(), parseInt(words[1].trim())]);
+
     if (answers.askAgain) {
         await inputChoices(choices);
     }
