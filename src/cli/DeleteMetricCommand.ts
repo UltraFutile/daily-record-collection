@@ -5,7 +5,7 @@ import { Metric } from "../entity/Metric";
 /**
  * TODO: implement way to 'back out' of selecting this option
  */
-export default async function deleteMetricCommand() {
+export async function deleteMetricCommand() {
     let metrics: Metric[] = await getRepository(Metric).find();
     let metricChoiceAnswer = await inquirer.prompt({
             type: 'list',

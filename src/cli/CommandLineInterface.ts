@@ -1,9 +1,9 @@
 import inquirer from 'inquirer';
 import {getConnection} from "typeorm";
-import createMetricCommand from './CreateMetricCommand';
-import deleteMetricCommand from './DeleteMetricCommand';
-import listMetricsCommand from './ListMetricsCommand';
-import recordCommand from './RecordCommand';
+import {createMetricCommand} from './CreateMetricCommand';
+import {deleteMetricCommand} from './DeleteMetricCommand';
+import {listMetricsCommand} from './ListMetricsCommand';
+import {recordCommand} from './RecordCommand';
 
 export function commandLineInterface() {
     main();

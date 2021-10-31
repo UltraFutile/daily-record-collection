@@ -1,15 +1,29 @@
 import inquirer from 'inquirer';
 import { getRepository } from "typeorm";
 import { RecordType } from "../data/RecordType";
-import { Choice } from "../entity/Choice";
 import { Metric } from "../entity/Metric";
-import { IntegerRecord } from "../entity/records/IntegerRecord";
-import { ScaleRecord } from "../entity/records/ScaleRecord";
-import { TextRecord } from "../entity/records/TextRecord";
+import { AbstractRecordPrompt } from './record-prompts/AbstractRecordPrompt';
+import { IntegerRecordPrompt } from './record-prompts/IntegerRecordPrompt';
+import { ScaleRecordPrompt } from './record-prompts/ScaleRecordPrompt';
+import { TextRecordPrompt } from './record-prompts/TextRecordPrompt';
 
-export default async function recordCommand () {
+function recordPromptFactory(metric: Metric): AbstractRecordPrompt {
+    switch (metric.getRecordType()) {
+        case RecordType.Integer:
+            return new IntegerRecordPrompt(metric);
+        case RecordType.Scale:
+            return new ScaleRecordPrompt(metric);
+        case RecordType.Text:
+            return new TextRecordPrompt(metric);
+        default:
+            console.error("Unrecognized record type!");
+            throw "recordPromptFactory error";
+    }
+}
+
+export async function recordCommand() {
     let metrics: Metric[] = await getRepository(Metric).find();
-    let metricChoiceAnswer = await inquirer.prompt({
+    let answer = await inquirer.prompt({
         type: 'list',
         name: 'metricChoice',
         message: 'Which metric would you like to record?',
@@ -17,56 +31,6 @@ export default async function recordCommand () {
     });
 
     // get the metric
-    let metric: Metric = metrics.find(x => x.name === metricChoiceAnswer.metricChoice);
-
-    // base prompt
-    let recordPrompt: any = {
-        name: 'metricValue',
-        message: metric.promptText
-    };
-
-    // TODO: There's probably a better way to organize this code
-    // instead of constantly using switch statements everywhere
-    switch (metric.getRecordType()) {
-        case RecordType.Integer:
-            recordPrompt.type = 'input';
-            break;
-        case RecordType.Scale:
-            recordPrompt.type = 'list';
-            recordPrompt.choices = (await metric.choices).map(x => x.name); // TODO: validation for choice list assumed here! bad?
-            break;
-        case RecordType.Text:
-            recordPrompt.type = 'input';
-            break;
-        default:
-            console.error("Unrecognized record type!")
-            break;
-    }
-
-    let answers = await inquirer.prompt(recordPrompt);
-    
-    switch (metric.getRecordType()) {
-        case RecordType.Integer:
-            let integerRecord = new IntegerRecord();
-            integerRecord.value = parseInt(answers.metricValue); // TODO: Validation for parseInt
-            integerRecord.metric = metric;
-            await getRepository(IntegerRecord).save(integerRecord);
-            break;
-        case RecordType.Scale:
-            let choice: Choice = (await metric.choices).find(x => x.name === answers.metricValue);
-            let scaleRecord = new ScaleRecord();
-            scaleRecord.choice = choice; // TODO: inconsistent name? Other records use 'value'...
-            scaleRecord.metric = metric;
-            await getRepository(ScaleRecord).save(scaleRecord);
-            break;
-        case RecordType.Text:
-            let textRecord = new TextRecord();
-            textRecord.value = answers.metricValue; // TODO: Validation for string input
-            textRecord.metric = metric;
-            await getRepository(TextRecord).save(textRecord);
-            break;
-        default:
-            console.error("Unrecognized record type!")
-            break;
-    }
+    let metric: Metric = metrics.find(x => x.name === answer.metricChoice);
+    await recordPromptFactory(metric).executeAsync();    
 }

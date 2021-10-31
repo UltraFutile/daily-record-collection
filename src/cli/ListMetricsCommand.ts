@@ -1,7 +1,7 @@
 import { getRepository } from "typeorm";
 import { Metric } from "../entity/Metric";
 
-export default async function listMetricsCommand (): Promise<void> {
+export async function listMetricsCommand (): Promise<void> {
     let metrics: Metric[] = await getRepository(Metric).find();
 
     for (const metric of metrics) {

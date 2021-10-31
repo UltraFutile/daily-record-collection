@@ -4,7 +4,7 @@ import { RecordType } from "../data/RecordType";
 import { Choice } from '../entity/Choice';
 import { Metric } from "../entity/Metric";
 
-export default async function createMetricCommand () {
+export async function createMetricCommand () {
     let answers = await inquirer.prompt([
         {
             type: 'input',
