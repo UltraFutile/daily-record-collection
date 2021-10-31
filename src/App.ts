@@ -1,4 +1,4 @@
-import { commandLineInterface } from './CommandLineInterface';
+import { commandLineInterface } from './cli/CommandLineInterface';
 import {createConnection, getConnection} from "typeorm";
 
 createConnection().then(async connection => {
