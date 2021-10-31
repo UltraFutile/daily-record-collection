@@ -5,10 +5,21 @@ import { Choice } from '../entity/Choice';
 import { Metric } from "../entity/Metric";
 
 export async function createMetricCommand () {
-    let answers = await inquirer.prompt([
+    let newMetricInputs = await inputMetric();
+    let choices: [string, number][];
+
+    if (RecordType[newMetricInputs.type] === RecordType.Scale) {
+        choices  = [];
+        await inputChoices(choices);
+    }
+    await finalConfirmation(newMetricInputs.name, RecordType[newMetricInputs.type], newMetricInputs.prompt, choices);
+}
+
+async function inputMetric(): Promise<{ name: string, type: string, prompt: string }> {
+    return await inquirer.prompt([
         {
             type: 'input',
-            name: 'metricName',
+            name: 'name',
             message: 'What would you like to name the metric?',
             async validate (answer: string) {
                 if (answer) {
@@ -25,46 +36,42 @@ export async function createMetricCommand () {
         },
         {
             type: 'input',
-            name: 'metricPrompt',
+            name: 'prompt',
             message: 'What should the prompt text be for this metric?'
         },
         {
             type: 'list',
-            name: 'metricType',
+            name: 'type',
             message: 'What kind of metric is this?',
             choices: [
                 RecordType.Integer,
                 RecordType.Scale,
                 RecordType.Text
             ]
-        },
-        
-    ])
-    
-    console.log(answers);
-
-    let choices: [string, number][] = [];
-    if (RecordType[answers.metricType] === RecordType.Scale) {
-        await inputChoices(choices);
-    }
-    await createMetric(answers.metricName, RecordType[answers.metricType], answers.metricPrompt, choices);
+        }        
+    ]);
 }
 
-async function createMetric(metricName: string, recordType: RecordType, promptText: string, choices?: [string, number][]) {
-    const metric = new Metric();
-    metric.name = metricName;
-    metric.recordType = recordType.toString();
-    metric.promptText = promptText;
-    let newMetric: Metric = await getRepository(Metric).save(metric);
+async function finalConfirmation(metricName: string, recordType: RecordType, promptText: string, choices?: [string, number][]) {
+    let answers = await inquirer.prompt({
+        type: 'list',
+        name: 'finalDecision',
+        message: `Does everything here like correct?:
+        \tMetric Name: ${metricName}
+        \tRecord Type: ${recordType}
+        \tPrompt Text: ${promptText}
+        ${(choices) ? `\tChoices: ${choices.map(c => `[${c}]`)}` : ''}`,
+        choices: [
+            'Yes',
+            'Cancel'
+        ]
+    });
 
-    if (choices) {
-        choices.forEach(async c => {
-            const choice = new Choice();
-            choice.name = c[0];
-            choice.metric = newMetric;
-            choice.value = c[1];
-            await getRepository(Choice).save(choice);
-        })
+    if (answers.finalDecision === 'Yes') {
+        await createMetric(metricName, RecordType[recordType], promptText, choices);
+    }
+    else {
+        console.log("Cancel metric creation, back to main menu.");
     }
 }
 
@@ -92,5 +99,25 @@ async function inputChoices(choices: [string, number][]): Promise<void> {
     else {
         // TODO: Should validate, at least one choice should be created.
         console.log(choices);
+    }
+}
+
+async function createMetric(metricName: string, recordType: RecordType, promptText: string, choices?: [string, number][]) {
+    const metric = new Metric();
+    metric.name = metricName;
+    metric.recordType = recordType.toString();
+    metric.promptText = promptText;
+    let newMetric: Metric = await getRepository(Metric).save(metric);
+
+    if (choices) {
+        await getRepository(Choice).save(
+            choices.map(c => {
+                const choice = new Choice()
+                choice.name = c[0];
+                choice.metric = newMetric;
+                choice.value = c[1];
+                return choice;
+            })
+        );
     }
 }

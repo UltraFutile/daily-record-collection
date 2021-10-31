@@ -6,11 +6,6 @@ import {listMetricsCommand} from './ListMetricsCommand';
 import {recordCommand} from './RecordCommand';
 
 export function commandLineInterface() {
-    main();
-}
-
-// Setup inquirer prompt
-function main() {
     console.log('Welcome to your daily record collection!');
     menu();
 }
@@ -33,6 +28,7 @@ async function menu() {
             MainMenuChoices.ListMetrics,
             MainMenuChoices.CreateMetric,
             MainMenuChoices.DeleteMetric,
+            new inquirer.Separator(),
             MainMenuChoices.Exit
         ]
     }
