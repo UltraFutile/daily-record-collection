@@ -18,14 +18,6 @@ export default async function recordCommand () {
 
     // get the metric
     let metric: Metric = metrics.find(x => x.name === metricChoiceAnswer.metricChoice);
-    
-    // get choices
-    // TODO: I'm sure TypeORM supports a way to get both metric and choices in one query
-    let choices: Choice[];
-    if (metric.getRecordType() === RecordType.Scale) {
-        choices = await getRepository(Choice).find({metric: metric});
-    }
-
 
     // base prompt
     let recordPrompt: any = {
@@ -41,7 +33,7 @@ export default async function recordCommand () {
             break;
         case RecordType.Scale:
             recordPrompt.type = 'list';
-            recordPrompt.choices = choices.map(x => x.name); // TODO: validation for choice list assumed here! bad?
+            recordPrompt.choices = (await metric.choices).map(x => x.name); // TODO: validation for choice list assumed here! bad?
             break;
         case RecordType.Text:
             recordPrompt.type = 'input';
@@ -61,7 +53,7 @@ export default async function recordCommand () {
             await getRepository(IntegerRecord).save(integerRecord);
             break;
         case RecordType.Scale:
-            let choice: Choice = choices.find(x => x.name === answers.metricValue);
+            let choice: Choice = (await metric.choices).find(x => x.name === answers.metricValue);
             let scaleRecord = new ScaleRecord();
             scaleRecord.choice = choice; // TODO: inconsistent name? Other records use 'value'...
             scaleRecord.metric = metric;

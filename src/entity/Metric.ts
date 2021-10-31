@@ -1,5 +1,6 @@
-import {Column, Entity, PrimaryGeneratedColumn} from "typeorm";
+import {Column, Entity, OneToMany, PrimaryGeneratedColumn} from "typeorm";
 import { RecordType } from "../data/RecordType";
+import { Choice } from "./Choice";
 
 /**
  * Defines a metric that will be recorded
@@ -31,4 +32,7 @@ export class Metric {
 
     @Column()
     promptText: string;
+
+    @OneToMany(() => Choice, choice => choice.metric)
+    choices: Promise<Choice[]>;
 }
