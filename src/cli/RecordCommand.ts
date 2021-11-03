@@ -27,16 +27,17 @@ export async function recordCommand() {
         type: 'list',
         name: 'metricChoice',
         message: 'Which metric would you like to record?',
-        choices: [...metrics.map(x => x.name), new inquirer.Separator(), "Cancel"]
+        choices: [...metrics.map(x => ({ name: x.name, value: x.id})), new inquirer.Separator(), {name: "Cancel", value: -1}]
     });
 
-    // TODO: Too basic. What if user decides to name a metric "Cancel" or "Exit"?
-    // Maybe we should use the inquirer choice object and not do string comparison
-    if (answer.metricChoice === "Cancel") {
+    // Just using -1 to mean 'cancel' in this one instance doesn't seem very robust 
+    // (SQL allows negative ids I think), but it will do for now...?
+    // TODO: Change this if it ever actually becomes a problem
+    if (answer.metricChoice === -1) {
         return;
     }
 
     // get the metric
-    let metric: Metric = metrics.find(x => x.name === answer.metricChoice);
+    let metric: Metric = metrics.find(x => x.id === answer.metricChoice);
     await recordPromptFactory(metric).executeAsync();    
 }
