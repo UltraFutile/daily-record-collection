@@ -27,8 +27,14 @@ export async function recordCommand() {
         type: 'list',
         name: 'metricChoice',
         message: 'Which metric would you like to record?',
-        choices: metrics.map(x => x.name)
+        choices: [...metrics.map(x => x.name), new inquirer.Separator(), "Cancel"]
     });
+
+    // TODO: Too basic. What if user decides to name a metric "Cancel" or "Exit"?
+    // Maybe we should use the inquirer choice object and not do string comparison
+    if (answer.metricChoice === "Cancel") {
+        return;
+    }
 
     // get the metric
     let metric: Metric = metrics.find(x => x.name === answer.metricChoice);
