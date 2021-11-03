@@ -31,7 +31,9 @@ export async function recordCommand() {
             ...metrics.map(x => ({ name: x.name, value: x.id})), 
             new inquirer.Separator(), 
             {name: "Cancel", value: -1}
-        ]
+        ],
+        pageSize: 5,
+        loop: false
     });
 
     // Just using -1 to mean 'cancel' in this one instance doesn't seem very robust 
