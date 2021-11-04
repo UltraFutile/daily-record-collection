@@ -25,13 +25,12 @@ async function inputMetric(): Promise<{ name: string, type: string, prompt: stri
                 if (answer) {
                     let metric = await getRepository(Metric).findOne({ name: answer});
                     if (metric) {
-                        console.log(` Metric with name ${answer} already exists! Please try a different name.`)
-                        return false;
+                        return `Metric with name ${answer} already exists! Please try a different name.`;
                     }
                     return true;
                 }
-                console.log('Please enter a value');
-                return false;
+                // TODO: Still not ideal in that I can't escape from this command until the confirmation step
+                return 'Please enter a value';
             }
         },
         {
