@@ -1,4 +1,4 @@
-import inquirer from 'inquirer';
+import * as inquirer from 'inquirer';
 import {getConnection} from "typeorm";
 import {createMetricCommand} from './CreateMetricCommand';
 import {deleteMetricCommand} from './DeleteMetricCommand';

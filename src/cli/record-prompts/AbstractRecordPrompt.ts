@@ -1,4 +1,4 @@
-import inquirer from 'inquirer';
+import * as inquirer from 'inquirer';
 import { Metric } from "../../entity/Metric";
 import { PromptOptions } from './PromptOptions';
 
