@@ -1,12 +1,15 @@
 import * as inquirer from 'inquirer';
 import {getConnection} from "typeorm";
+import { DateTimeUtility } from '../time/DateTimeUtility';
 import {createMetricCommand} from './CreateMetricCommand';
 import {deleteMetricCommand} from './DeleteMetricCommand';
 import {listMetricsCommand} from './ListMetricsCommand';
 import {recordCommand} from './RecordCommand';
 
 export function commandLineInterface() {
-    console.log('Welcome to your daily record collection!');
+    console.log("Welcome to your daily record collection!");
+    let today: string = DateTimeUtility.getTodayFormatted();
+    console.log(`It is ${today}, ${DateTimeUtility.getDayOfWeek(today)} today.`);
     menu();
 }
 
